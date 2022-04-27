@@ -1,6 +1,7 @@
 /.idea/
 /.virtualenv
 /.env
+auth_token.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
