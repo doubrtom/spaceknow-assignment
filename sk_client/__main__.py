@@ -27,10 +27,16 @@ def set_auth_token_to_api_client(space_know_client: SpaceKnowClient):
 api_client = SpaceKnowClient()
 set_auth_token_to_api_client(api_client)
 
-# User info
+# === User info
 # user_info = api_client.user_api.get_user_info()
 # utils.pretty_print_json(user_info)
 
-# Remaining credit
-credit = api_client.credits_api.get_remaining_credit()
-print(credit)
+# === Remaining credit
+# credit = api_client.credits_api.get_remaining_credit()
+# print(credit)
+
+# === Search imagery
+geojson_location = utils.load_geojson_data("parking_2")
+search_imagery_data = utils.load_analysis_settings("search_imagery")
+search_imagery_data["extent"] = geojson_location
+pipeline_data = api_client.imagery_api.search_initiate(search_imagery_data)
