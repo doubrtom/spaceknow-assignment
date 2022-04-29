@@ -59,3 +59,14 @@ class InitiatedPipelineData(TypedDict):
     nextTry: int
     pipelineId: str
     status: Literal["NEW", "PROCESSING", "FAILED", "RESOLVED"]
+
+
+class ImageMetadata(TypedDict):
+    """Image metadata for found imagery by Ragnar API.
+
+    Not all fields are documented.
+    """
+
+    sceneId: str
+    datetime: str
+    cloudCover: NotRequired[float]

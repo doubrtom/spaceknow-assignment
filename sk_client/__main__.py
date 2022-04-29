@@ -36,7 +36,13 @@ set_auth_token_to_api_client(api_client)
 # print(credit)
 
 # === Search imagery
-geojson_location = utils.load_geojson_data("parking_2")
-search_imagery_data = utils.load_analysis_settings("search_imagery")
-search_imagery_data["extent"] = geojson_location
-pipeline_data = api_client.imagery_api.search_initiate(search_imagery_data)
+# geojson_location = utils.load_geojson_data("parking_2")
+# search_imagery_data = utils.load_analysis_settings("search_imagery")
+# search_imagery_data["extent"] = geojson_location
+# pipeline_data = api_client.imagery_api.search_initiate(search_imagery_data)
+
+# === Retrieve imagery
+pipeline_data = {"nextTry": 5, "pipelineId": "Aum2faFykPhIUuYmwY9Q", "status": "NEW"}
+# pipeline_status = api_client.tasking_api.get_status(pipeline_data["pipelineId"])
+imagery_found = api_client.imagery_api.search_retrieve(pipeline_data["pipelineId"])
+utils.pretty_print_json(imagery_found)
