@@ -2,7 +2,7 @@
 
 
 class UserApi:
-    """SpaceKnow Auth API."""
+    """SpaceKnow User API."""
 
     BASE_URL = "https://api.spaceknow.com/user"
 

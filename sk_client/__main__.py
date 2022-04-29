@@ -27,5 +27,10 @@ def set_auth_token_to_api_client(space_know_client: SpaceKnowClient):
 api_client = SpaceKnowClient()
 set_auth_token_to_api_client(api_client)
 
-user_info = api_client.user_api.get_user_info()
-utils.pretty_print_json(user_info)
+# User info
+# user_info = api_client.user_api.get_user_info()
+# utils.pretty_print_json(user_info)
+
+# Remaining credit
+credit = api_client.credits_api.get_remaining_credit()
+print(credit)

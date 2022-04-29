@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-from .api import auth_api, user_api
+from .api import auth_api, user_api, credits_api
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,7 @@ class SpaceKnowClient:
         # Init API classes
         self.auth_api = auth_api.AuthApi(self)
         self.user_api = user_api.UserApi(self)
+        self.credits_api = credits_api.CreditsApi(self)
 
     def set_auth_token(self, id_token: str):
         """Save auth id_token and add auth header."""
