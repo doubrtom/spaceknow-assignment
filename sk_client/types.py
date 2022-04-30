@@ -70,3 +70,10 @@ class ImageMetadata(TypedDict):
     sceneId: str
     datetime: str
     cloudCover: NotRequired[float]
+
+
+class AllocatedAreaData(TypedDict):
+    """Data about allocated area."""
+
+    km2: float
+    cost: float

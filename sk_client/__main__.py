@@ -42,7 +42,30 @@ set_auth_token_to_api_client(api_client)
 # pipeline_data = api_client.imagery_api.search_initiate(search_imagery_data)
 
 # === Retrieve imagery
-pipeline_data = {"nextTry": 5, "pipelineId": "Aum2faFykPhIUuYmwY9Q", "status": "NEW"}
+# pipeline_data = {"nextTry": 5, "pipelineId": "Aum2faFykPhIUuYmwY9Q", "status": "NEW"}
+# # pipeline_status = api_client.tasking_api.get_status(pipeline_data["pipelineId"])
+# imagery_found = api_client.imagery_api.search_retrieve(pipeline_data["pipelineId"])
+# utils.pretty_print_json(imagery_found)
+
+
+# === Run kraken
+# # Scene ID1: GuoBFqtuBllGqZWHb395VXytBgtnXKV7K48kYM8ag5FDq0KfkK_Qo0P-h36IUplIi_LkvUfrPLIxkYYr
+# # Scene ID2: GuoBFqtuBllGqZWHb395VXytBgtnXKV7LKqbmUuFp3UGXHllmbTepA-ESGr0a96To3V19doB7iL6Q9Mj
+# analysis_data = {
+#     "scene_ids": ["GuoBFqtuBllGqZWHb395VXytBgtnXKV7K48kYM8ag5FDq0KfkK_Qo0P-h36IUplIi_LkvUfrPLIxkYYr"],
+#     "geojson": utils.load_geojson_data("parking_2")
+# }
+# # allocated_data = api_client.credits_api.allocate_geojson(**analysis_data)
+# # allocated_data = api_client.credits_api.check_allocated_area(**analysis_data)
+# pipeline_data = api_client.kraken_api.release_initiate(
+#     "cars",
+#     **analysis_data
+# )
+# utils.pretty_print_json(pipeline_data)
+
+
+# === check kraken status
+# pipeline_data = {"nextTry": 5, "pipelineId": "kpmfCJzfvfDbZhYm1ILQ", "status": "NEW"}
 # pipeline_status = api_client.tasking_api.get_status(pipeline_data["pipelineId"])
-imagery_found = api_client.imagery_api.search_retrieve(pipeline_data["pipelineId"])
-utils.pretty_print_json(imagery_found)
+# utils.pretty_print_json(pipeline_status)
+
