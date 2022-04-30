@@ -1,2 +1,6 @@
 [SIMILARITIES]
 min-similarity-lines=10
+
+[FORMAT]
+good-names=i,j,k,ex,Run,_,z,x,y
+

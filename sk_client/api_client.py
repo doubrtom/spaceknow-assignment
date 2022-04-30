@@ -46,9 +46,22 @@ class SpaceKnowClient:
         self.number_of_queries += 1
         if not response.ok:
             logger.error(
-                "Unable to get response for URL=%s, reason: %s",
+                "Unable to get (POST) response for URL=%s, reason: %s",
                 url,
                 response.json(),
             )
             response.raise_for_status()
         return response.json()
+
+    def send_get_query(self, url: str):
+        """Send GET query."""
+        response = requests.get(url, headers=self.headers)
+        self.number_of_queries += 1
+        if not response.ok:
+            logger.error(
+                "Unable to get (GET) response for URL=%s, reason: %s",
+                url,
+                response.json(),
+            )
+            response.raise_for_status()
+        return response

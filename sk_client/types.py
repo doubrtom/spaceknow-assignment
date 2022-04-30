@@ -77,3 +77,11 @@ class AllocatedAreaData(TypedDict):
 
     km2: float
     cost: float
+
+
+class KrakenAnalysisResultData(TypedDict):
+    """Data result for kraken analysis."""
+
+    mapId: str
+    maxZoom: int
+    tiles: List[List[int]]  # List of map tiles, tile in format [z, x, y] coordinates

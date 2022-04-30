@@ -18,13 +18,17 @@ class CreditsApi:
         data = self.api_client.send_post_query(url)
         return data["remainingCredit"]
 
-    def allocate_geojson(self, scene_ids: List[str], geojson: ExtentData) -> AllocatedAreaData:
+    def allocate_geojson(
+        self, scene_ids: List[str], geojson: ExtentData
+    ) -> AllocatedAreaData:
         """Allocate an area and time range."""
         url = f"{self.BASE_URL}/area/allocate-geojson"
         json_data = {"geojson": geojson, "sceneIds": scene_ids}
         return self.api_client.send_post_query(url, json_data)
 
-    def check_allocated_area(self, scene_ids: List[str], geojson: ExtentData) -> AllocatedAreaData:
+    def check_allocated_area(
+        self, scene_ids: List[str], geojson: ExtentData
+    ) -> AllocatedAreaData:
         """Allocate an area and time range."""
         url = f"{self.BASE_URL}/area/check-geojson"
         json_data = {"geojson": geojson, "sceneIds": scene_ids}
