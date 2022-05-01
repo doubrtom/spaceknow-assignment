@@ -68,6 +68,13 @@ class InitiatedPipelineData(TypedDict):
     status: Literal["NEW", "PROCESSING", "FAILED", "RESOLVED"]
 
 
+class PipelineStatusData(TypedDict):
+    """Status of async pipeline."""
+
+    nextTry: NotRequired[int]
+    status: Literal["NEW", "PROCESSING", "FAILED", "RESOLVED"]
+
+
 class ImageMetadata(TypedDict):
     """Image metadata for found imagery by Ragnar API.
 
@@ -76,6 +83,9 @@ class ImageMetadata(TypedDict):
 
     sceneId: str
     datetime: str
+    satellite: str
+    provider: str
+    dataset: str
     cloudCover: NotRequired[float]
 
 

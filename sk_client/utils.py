@@ -49,9 +49,14 @@ def load_analysis_settings(file_name: str) -> dict:
         return json.load(file)
 
 
+def pretty_format_json(json_dict: dict) -> str:
+    """Pretty format json data into str."""
+    return json.dumps(json_dict, indent=4, sort_keys=True)
+
+
 def pretty_print_json(json_dict: dict) -> None:
     """Pretty print json data into stdout."""
-    print(json.dumps(json_dict, indent=4, sort_keys=True))
+    print(pretty_format_json(json_dict))
 
 
 def load_detection_tile_data(z: int, x: int, y: int) -> FeatureCollectionData:

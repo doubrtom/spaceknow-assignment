@@ -4,7 +4,7 @@ The API interfaces imagery and analyses through tiled web map interface.
 """
 from typing import List
 
-from ..types import ExtentData, KrakenAnalysisResultData
+from ..types import ExtentData, KrakenAnalysisResultData, InitiatedPipelineData
 
 
 class KrakenApi:
@@ -20,7 +20,7 @@ class KrakenApi:
         map_type: str,
         scene_ids: List[str],
         geojson: ExtentData,
-    ):
+    ) -> InitiatedPipelineData:
         """Start analysis over selected area."""
         url = f"{self.BASE_URL}/release/initiate"
         json_data = {
