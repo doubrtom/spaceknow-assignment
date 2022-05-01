@@ -84,7 +84,7 @@ def main(
         api_client, analysis_pipeline
     )
     progress.download_cars_analysis_tiles(
-        api_client, kraken_result_data["tiles"], kraken_result_data["mapId"]
+        api_client, kraken_result_data["tiles"], kraken_result_data["mapId"], scene_id
     )
 
     analysis_pipeline = progress.run_kraken_analysis_imagery(
@@ -95,13 +95,13 @@ def main(
         api_client, analysis_pipeline
     )
     progress.download_imagery_analysis_tiles(
-        api_client, kraken_result_data["tiles"], kraken_result_data["mapId"]
+        api_client, kraken_result_data["tiles"], kraken_result_data["mapId"], scene_id
     )
 
-    progress.render_detected_items_into_imagery(kraken_result_data["tiles"])
-    progress.stitch_enhanced_imageries(kraken_result_data["tiles"])
+    progress.render_detected_items_into_imagery(kraken_result_data["tiles"], scene_id)
+    progress.stitch_enhanced_imageries(kraken_result_data["tiles"], scene_id)
 
-    typer.echo("Analysis done, see result/result.png for generated image.")
+    typer.echo("Analysis done, see 'result' folder for generated data.")
 
 
 app()

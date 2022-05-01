@@ -130,7 +130,7 @@ def retrieve_kraken_analysis_cars(
 
 
 def download_cars_analysis_tiles(
-    api_client: SpaceKnowClient, tiles: List[List[int]], map_id: str
+    api_client: SpaceKnowClient, tiles: List[List[int]], map_id: str, scene_id: str
 ) -> None:
     """Download all 'cars' detection tiles."""
     typer.echo("# Downloading kraken detection tiles for 'cars'.")
@@ -140,7 +140,9 @@ def download_cars_analysis_tiles(
         detection_tile_data = api_client.kraken_api.get_tile_data(
             map_id, tile[0], tile[1], tile[2], "detections.geojson"
         )
-        utils.save_detection_tile_data(detection_tile_data, tile[0], tile[1], tile[2])
+        utils.save_detection_tile_data(
+            scene_id, detection_tile_data, tile[0], tile[1], tile[2]
+        )
 
 
 def run_kraken_analysis_imagery(
@@ -164,7 +166,7 @@ def retrieve_kraken_analysis_imagery(
 
 
 def download_imagery_analysis_tiles(
-    api_client: SpaceKnowClient, tiles: List[List[int]], map_id: str
+    api_client: SpaceKnowClient, tiles: List[List[int]], map_id: str, scene_id: str
 ) -> None:
     """Download all 'imagery' tiles."""
     typer.echo("# Downloading kraken tiles for 'imagery'.")
@@ -174,16 +176,18 @@ def download_imagery_analysis_tiles(
         imagery_tile_data = api_client.kraken_api.get_tile_data(
             map_id, tile[0], tile[1], tile[2], "truecolor.png"
         )
-        utils.save_imagery_tile_data(imagery_tile_data, tile[0], tile[1], tile[2])
+        utils.save_imagery_tile_data(
+            scene_id, imagery_tile_data, tile[0], tile[1], tile[2]
+        )
 
 
-def render_detected_items_into_imagery(tiles: List[List[int]]) -> None:
+def render_detected_items_into_imagery(tiles: List[List[int]], scene_id: str) -> None:
     """Render detected items into imagery."""
     typer.echo("# Rendering detected objects into imagery tiles.")
-    image_processing.render_detected_objects(tiles)
+    image_processing.render_detected_objects(tiles, scene_id)
 
 
-def stitch_enhanced_imageries(tiles: List[List[int]]) -> None:
+def stitch_enhanced_imageries(tiles: List[List[int]], scene_id: str) -> None:
     """Stitch all enhanced imageries into final result."""
     typer.echo("# Stitching all enhanced imageries into final result.")
-    image_processing.stitch_tiles(tiles)
+    image_processing.stitch_tiles(tiles, scene_id)
