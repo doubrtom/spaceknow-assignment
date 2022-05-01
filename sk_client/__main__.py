@@ -2,7 +2,7 @@
 from pathlib import Path
 
 from .api_client import SpaceKnowClient
-from . import utils
+from . import utils, image_processing
 
 
 def set_auth_token_to_api_client(space_know_client: SpaceKnowClient):
@@ -122,3 +122,26 @@ set_auth_token_to_api_client(api_client)
 #         data["mapId"], tile[0], tile[1], tile[2], "truecolor.png"
 #     )
 #     utils.save_imagery_tile_data(imagery_tile_data, tile[0], tile[1], tile[2])
+
+
+# === render detected items into imagery
+tiles = [[16, 60641, 37956], [16, 60641, 37957], [16, 60640, 37957], [16, 60640, 37956]]
+image_processing.render_detected_objects(tiles)
+
+
+# === stitch enhanced imagers together
+# tiles = [
+#     [16, 60641, 37956], [16, 60641, 37957], [16, 60640, 37957], [16, 60640, 37956]
+# ]
+image_processing.stitch_tiles(tiles)
+
+
+# testing zooming:
+# coords = utils.convert_coordinates(153.110535, -27.397031, 16)
+# print([math.floor(x / 256) for x in coords], 16)
+# coords = utils.convert_coordinates(153.110535, -27.397031, 17)
+# print([math.floor(x / 256) for x in coords], 17)
+# coords = utils.convert_coordinates(153.110535, -27.397031, 18)
+# print([math.floor(x / 256) for x in coords], 18)
+# coords = utils.convert_coordinates(153.110535, -27.397031, 19)
+# print([math.floor(x / 256) for x in coords], 19)

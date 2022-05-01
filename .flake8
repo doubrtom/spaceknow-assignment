@@ -1,5 +1,5 @@
 [flake8]
-ignore = D104,N815
+ignore = D104,N815,W503
 max-line-length = 88
 exclude = .git,__pycache__,migrations,.coverage,.pytest_cache
 enable-extensions = pep8-naming,flake8-docstrings

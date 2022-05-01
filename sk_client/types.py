@@ -40,6 +40,13 @@ class ExtentData(TypedDict):
     properties: NotRequired[dict]
 
 
+class FeatureCollectionData(TypedDict):
+    """Collection of features - "array" of GeoJSON."""
+
+    type: Literal["FeatureCollection"]
+    features: List[ExtentData]
+
+
 class SearchImageryInitiateData(TypedDict):
     """Request data to start imagery searching async task."""
 

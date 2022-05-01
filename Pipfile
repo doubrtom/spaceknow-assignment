@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 requests = "*"
 typing-extensions = "*"
+opencv-python = "*"
 
 [dev-packages]
 black = "*"

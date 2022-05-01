@@ -1,8 +1,9 @@
 """Utils for sk_client project."""
 import os
 import json
+import math
 
-from .types import Credentials, ExtentData
+from .types import Credentials, ExtentData, FeatureCollectionData
 from .exceptions import ImproperlyConfiguredError
 
 
@@ -53,6 +54,15 @@ def pretty_print_json(json_dict: dict) -> None:
     print(json.dumps(json_dict, indent=4, sort_keys=True))
 
 
+def load_detection_tile_data(z: int, x: int, y: int) -> FeatureCollectionData:
+    """Save detection tile data (JSON) into file.
+
+    Data are saved into "result" folder.
+    """
+    with open(f"result/detections-{z}-{x}-{y}.geojson", "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
 def save_detection_tile_data(detection_tile_data: dict, z: int, x: int, y: int):
     """Save detection tile data (JSON) into file.
 
@@ -69,3 +79,29 @@ def save_imagery_tile_data(imagery_tile_data, z: int, x: int, y: int):
     """
     with open(f"result/imagery-{z}-{x}-{y}.png", "wb") as file:
         file.write(imagery_tile_data)
+
+
+def convert_coordinates(longitude, latitude, zoom_level, mod_to_tile: bool = False):
+    """Convert geographic coordinates.
+
+    Convert longitude and latitude into x, y coordinates.
+    For conversion, we use Web Mercator projection.
+    See: https://en.wikipedia.org/wiki/Web_Mercator_projection
+
+    :param longitude: Longitude in degrees
+    :param latitude: Latitude in degrees
+    :param zoom_level: Zoom level in map
+    :param mod_to_tile: If final x/y coordinates modulo by 256,
+        i.e. get position inside of tile 256x256.
+    """
+    long = math.radians(longitude)
+    lat = math.radians(latitude)
+    x = math.floor((256 / (2 * math.pi)) * (2**zoom_level) * (long + math.pi))
+    y = math.floor(
+        (256 / (2 * math.pi))
+        * (2**zoom_level)
+        * (math.pi - math.log(math.tan((math.pi / 4) + (lat / 2))))
+    )
+    if mod_to_tile:
+        return x % 256, y % 256
+    return x, y

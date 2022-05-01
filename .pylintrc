@@ -1,3 +1,7 @@
+[MASTER]
+disable=W1203
+extension-pkg-whitelist=cv2
+
 [SIMILARITIES]
 min-similarity-lines=10
 
