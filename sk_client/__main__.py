@@ -6,6 +6,7 @@ from pathlib import Path
 
 import typer
 
+from .exceptions import PipelineFailedError
 from .api_client import SpaceKnowClient
 from . import utils, progress
 
@@ -68,40 +69,87 @@ def main(
 
     search_pipeline = progress.search_imagery(api_client, selected_area)
     progress.wait_pipeline(api_client, search_pipeline)
-    imagery_data = progress.retrieve_imagery(api_client, search_pipeline)
-    selected_imagery_index = progress.select_imagery(imagery_data)
+    list_imagery_data = progress.retrieve_imagery(api_client, search_pipeline)
+    selected_imagery_index = progress.select_imagery(list_imagery_data)
 
-    # todo(doubravskytomas): solve when "all"
-    selected_imagery_data = imagery_data[selected_imagery_index]
-    scene_id = selected_imagery_data["sceneId"]
-    progress.allocate_area(api_client, scene_id, selected_area)
+    if selected_imagery_index is None:
+        selected_scenes = [
+            imagery_data["sceneId"] for imagery_data in list_imagery_data
+        ]
+    else:
+        selected_imagery_data = list_imagery_data[selected_imagery_index]
+        selected_scenes = [selected_imagery_data["sceneId"]]
 
-    analysis_pipeline = progress.run_kraken_analysis_cars(
-        api_client, scene_id, selected_area
-    )
-    progress.wait_pipeline(api_client, analysis_pipeline)
-    kraken_result_data = progress.retrieve_kraken_analysis_cars(
-        api_client, analysis_pipeline
-    )
-    progress.download_cars_analysis_tiles(
-        api_client, kraken_result_data["tiles"], kraken_result_data["mapId"], scene_id
-    )
+    # Run all async pipeline at the same time.
+    cars_analysis_pipelines = []
+    imagery_analysis_pipelines = []
+    mapping_pipeline_to_scene_id = {}
+    failed_scene_ids = []
+    for scene_id in selected_scenes:
+        progress.allocate_area(api_client, scene_id, selected_area)
 
-    analysis_pipeline = progress.run_kraken_analysis_imagery(
-        api_client, scene_id, selected_area
-    )
-    progress.wait_pipeline(api_client, analysis_pipeline)
-    kraken_result_data = progress.retrieve_kraken_analysis_cars(
-        api_client, analysis_pipeline
-    )
-    progress.download_imagery_analysis_tiles(
-        api_client, kraken_result_data["tiles"], kraken_result_data["mapId"], scene_id
-    )
+        pipeline = progress.run_kraken_analysis_cars(
+            api_client, scene_id, selected_area
+        )
+        mapping_pipeline_to_scene_id[pipeline["pipelineId"]] = scene_id
+        cars_analysis_pipelines.append(pipeline)
 
-    progress.render_detected_items_into_imagery(kraken_result_data["tiles"], scene_id)
-    progress.stitch_enhanced_imageries(kraken_result_data["tiles"], scene_id)
+        pipeline = progress.run_kraken_analysis_imagery(
+            api_client, scene_id, selected_area
+        )
+        mapping_pipeline_to_scene_id[pipeline["pipelineId"]] = scene_id
+        imagery_analysis_pipelines.append(pipeline)
 
-    typer.echo("Analysis done, see 'result' folder for generated data.")
+    for pipeline in cars_analysis_pipelines:
+        scene_id = mapping_pipeline_to_scene_id[pipeline["pipelineId"]]
+        try:
+            progress.wait_pipeline(api_client, pipeline)
+        except PipelineFailedError:
+            failed_scene_ids.append(scene_id)
+            continue
+        kraken_result_data = progress.retrieve_kraken_analysis_cars(
+            api_client, pipeline
+        )
+        progress.download_cars_analysis_tiles(
+            api_client,
+            kraken_result_data["tiles"],
+            kraken_result_data["mapId"],
+            scene_id,
+        )
+
+    for pipeline in imagery_analysis_pipelines:
+        scene_id = mapping_pipeline_to_scene_id[pipeline["pipelineId"]]
+        if scene_id in failed_scene_ids:
+            # Do not process imagery pipeline when 'cars' detection failed
+            continue
+        try:
+            progress.wait_pipeline(api_client, pipeline)
+        except PipelineFailedError:
+            failed_scene_ids.append(scene_id)
+            continue
+        kraken_result_data = progress.retrieve_kraken_analysis_cars(
+            api_client, pipeline
+        )
+        progress.download_imagery_analysis_tiles(
+            api_client,
+            kraken_result_data["tiles"],
+            kraken_result_data["mapId"],
+            mapping_pipeline_to_scene_id[pipeline["pipelineId"]],
+        )
+        progress.render_detected_items_into_imagery(
+            kraken_result_data["tiles"],
+            mapping_pipeline_to_scene_id[pipeline["pipelineId"]],
+        )
+        progress.stitch_enhanced_imageries(
+            kraken_result_data["tiles"],
+            mapping_pipeline_to_scene_id[pipeline["pipelineId"]],
+        )
+
+    typer.echo("\n-------------------------------------------------------------")
+    typer.echo("Analysis done, see 'result' folder for generated data. Stats:")
+    typer.echo(f"-> Scene processed: {len(selected_scenes)}")
+    typer.echo(f"--> Successfully: {len(selected_scenes) - len(failed_scene_ids)}")
+    typer.echo(f"--> Unsuccessfully: {len(failed_scene_ids)}")
 
 
 app()

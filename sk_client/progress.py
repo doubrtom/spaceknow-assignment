@@ -14,6 +14,7 @@ from .types import (
     KrakenAnalysisResultData,
 )
 from .api_client import SpaceKnowClient
+from .exceptions import PipelineFailedError
 
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ def wait_pipeline(
             return
         if pipeline_status["status"] == "FAILED":
             typer.echo(f"Pipeline with id={pipeline_id} failed.", err=True)
-            raise typer.Exit(1)
+            raise PipelineFailedError(pipeline_id=pipeline_id)
 
         time.sleep(pipeline_status["nextTry"])
         pipeline_status = api_client.tasking_api.get_status(pipeline_id)
