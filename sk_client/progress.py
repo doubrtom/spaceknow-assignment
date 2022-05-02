@@ -1,5 +1,9 @@
-"""Module to hold steps in analysis progress."""
+"""Module to hold steps in analysis progress.
+
+Each step prints info into typer.echo output.
+"""
 from typing import List, Optional
+from pathlib import Path
 import logging
 import time
 
@@ -15,6 +19,7 @@ from .types import (
 )
 from .api_client import SpaceKnowClient
 from .exceptions import PipelineFailedError
+from .data import RunningAnalysesData
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +45,17 @@ def wait_pipeline(
 
         time.sleep(pipeline_status["nextTry"])
         pipeline_status = api_client.tasking_api.get_status(pipeline_id)
+
+
+def load_geojson(geojson_name) -> ExtentData:
+    """Load geojson with selected area, raise error on missing file."""
+    geojson_path = Path(f"data/{geojson_name}.geojson")
+    if not geojson_path.is_file():
+        typer.echo(
+            f"GeoJSON file does not exist: data/{geojson_name}.geojson", err=True
+        )
+        raise typer.Exit(1)
+    return utils.load_geojson_data(geojson_name)
 
 
 def search_imagery(
@@ -192,3 +208,89 @@ def stitch_enhanced_imageries(tiles: List[List[int]], scene_id: str) -> None:
     """Stitch all enhanced imageries into final result."""
     typer.echo("# Stitching all enhanced imageries into final result.")
     image_processing.stitch_tiles(tiles, scene_id)
+
+
+def run_analysis_pipelines(api_client: SpaceKnowClient, ra_data: RunningAnalysesData):
+    """Run all async pipelines at the same time for all selected scenes."""
+    for scene_id in ra_data.selected_scenes:
+        allocate_area(api_client, scene_id, ra_data.selected_area)
+
+        pipeline = run_kraken_analysis_cars(
+            api_client, scene_id, ra_data.selected_area
+        )
+        ra_data.mapping_pipeline_to_scene_id[pipeline['pipelineId']] = scene_id
+        ra_data.cars_analysis_pipelines.append(pipeline)
+
+        pipeline = run_kraken_analysis_imagery(
+            api_client, scene_id, ra_data.selected_area
+        )
+        ra_data.mapping_pipeline_to_scene_id[pipeline['pipelineId']] = scene_id
+        ra_data.imagery_analysis_pipelines.append(pipeline)
+
+
+def process_cars_analysis_pipelines(api_client: SpaceKnowClient, ra_data: RunningAnalysesData):
+    """Process all pipelines for 'cars' analyses."""
+    for pipeline in ra_data.cars_analysis_pipelines:
+        scene_id = ra_data.get_scene_id(pipeline)
+        try:
+            wait_pipeline(api_client, pipeline)
+        except PipelineFailedError:
+            ra_data.failed_scene_ids.add(scene_id)
+            continue
+        kraken_result_data = retrieve_kraken_analysis_cars(
+            api_client, pipeline
+        )
+        ra_data.cars_analysis_results[scene_id] = kraken_result_data
+        download_cars_analysis_tiles(
+            api_client,
+            kraken_result_data["tiles"],
+            kraken_result_data["mapId"],
+            scene_id,
+        )
+
+
+def process_imagery_analysis_pipelines(api_client: SpaceKnowClient, ra_data: RunningAnalysesData):
+    """Process all pipelines for 'imagery' analyses."""
+    for pipeline in ra_data.imagery_analysis_pipelines:
+        scene_id = ra_data.get_scene_id(pipeline)
+        if ra_data.is_scene_failed(scene_id):
+            # Do not process imagery pipeline when 'cars' detection failed
+            continue
+        try:
+            wait_pipeline(api_client, pipeline)
+        except PipelineFailedError:
+            ra_data.failed_scene_ids.add(scene_id)
+            continue
+        kraken_result_data = retrieve_kraken_analysis_cars(
+            api_client, pipeline
+        )
+        ra_data.imagery_analysis_results[scene_id] = kraken_result_data
+        download_imagery_analysis_tiles(
+            api_client,
+            kraken_result_data["tiles"],
+            kraken_result_data["mapId"],
+            scene_id,
+        )
+        render_detected_items_into_imagery(
+            kraken_result_data["tiles"],
+            scene_id,
+        )
+        stitch_enhanced_imageries(
+            kraken_result_data["tiles"],
+            scene_id,
+        )
+
+
+def count_detected_items(ra_data: RunningAnalysesData):
+    """Count detected items in imageries for all scenes."""
+    for scene_id, cars_analysis_results in ra_data.cars_analysis_results.items():
+        for tile in cars_analysis_results['tiles']:
+            detection_geojson = utils.load_detection_tile_data(*tile, scene_id)
+            for feature in detection_geojson["features"]:
+                feature_class = feature["properties"]["class"]
+                if feature_class == "cars":
+                    ra_data.add_detected_car()
+                if feature_class == "trucks":
+                    ra_data.add_detected_truck()
+
+

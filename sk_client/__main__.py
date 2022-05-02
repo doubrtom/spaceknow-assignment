@@ -6,7 +6,7 @@ from pathlib import Path
 
 import typer
 
-from .exceptions import PipelineFailedError
+from .data import RunningAnalysesData
 from .api_client import SpaceKnowClient
 from . import utils, progress
 
@@ -59,97 +59,30 @@ def main(
     )
 ):
     """Run 'cars' analysis for selected area."""
-    geojson_path = Path(f"data/{geojson_name}.geojson")
-    if not geojson_path.is_file():
-        typer.echo(
-            f"GeoJSON file does not exist: data/{geojson_name}.geojson", err=True
-        )
-        raise typer.Exit(1)
-    selected_area = utils.load_geojson_data(geojson_name)
+    ra_data = RunningAnalysesData()
+    ra_data.selected_area = progress.load_geojson(geojson_name)
 
-    search_pipeline = progress.search_imagery(api_client, selected_area)
+    search_pipeline = progress.search_imagery(api_client, ra_data.selected_area)
     progress.wait_pipeline(api_client, search_pipeline)
     list_imagery_data = progress.retrieve_imagery(api_client, search_pipeline)
     selected_imagery_index = progress.select_imagery(list_imagery_data)
 
     if selected_imagery_index is None:
-        selected_scenes = [
+        ra_data.selected_scenes = [
             imagery_data["sceneId"] for imagery_data in list_imagery_data
         ]
     else:
         selected_imagery_data = list_imagery_data[selected_imagery_index]
-        selected_scenes = [selected_imagery_data["sceneId"]]
+        ra_data.selected_scenes = [selected_imagery_data["sceneId"]]
 
-    # Run all async pipeline at the same time.
-    cars_analysis_pipelines = []
-    imagery_analysis_pipelines = []
-    mapping_pipeline_to_scene_id = {}
-    failed_scene_ids = []
-    for scene_id in selected_scenes:
-        progress.allocate_area(api_client, scene_id, selected_area)
-
-        pipeline = progress.run_kraken_analysis_cars(
-            api_client, scene_id, selected_area
-        )
-        mapping_pipeline_to_scene_id[pipeline["pipelineId"]] = scene_id
-        cars_analysis_pipelines.append(pipeline)
-
-        pipeline = progress.run_kraken_analysis_imagery(
-            api_client, scene_id, selected_area
-        )
-        mapping_pipeline_to_scene_id[pipeline["pipelineId"]] = scene_id
-        imagery_analysis_pipelines.append(pipeline)
-
-    for pipeline in cars_analysis_pipelines:
-        scene_id = mapping_pipeline_to_scene_id[pipeline["pipelineId"]]
-        try:
-            progress.wait_pipeline(api_client, pipeline)
-        except PipelineFailedError:
-            failed_scene_ids.append(scene_id)
-            continue
-        kraken_result_data = progress.retrieve_kraken_analysis_cars(
-            api_client, pipeline
-        )
-        progress.download_cars_analysis_tiles(
-            api_client,
-            kraken_result_data["tiles"],
-            kraken_result_data["mapId"],
-            scene_id,
-        )
-
-    for pipeline in imagery_analysis_pipelines:
-        scene_id = mapping_pipeline_to_scene_id[pipeline["pipelineId"]]
-        if scene_id in failed_scene_ids:
-            # Do not process imagery pipeline when 'cars' detection failed
-            continue
-        try:
-            progress.wait_pipeline(api_client, pipeline)
-        except PipelineFailedError:
-            failed_scene_ids.append(scene_id)
-            continue
-        kraken_result_data = progress.retrieve_kraken_analysis_cars(
-            api_client, pipeline
-        )
-        progress.download_imagery_analysis_tiles(
-            api_client,
-            kraken_result_data["tiles"],
-            kraken_result_data["mapId"],
-            mapping_pipeline_to_scene_id[pipeline["pipelineId"]],
-        )
-        progress.render_detected_items_into_imagery(
-            kraken_result_data["tiles"],
-            mapping_pipeline_to_scene_id[pipeline["pipelineId"]],
-        )
-        progress.stitch_enhanced_imageries(
-            kraken_result_data["tiles"],
-            mapping_pipeline_to_scene_id[pipeline["pipelineId"]],
-        )
+    progress.run_analysis_pipelines(api_client, ra_data)
+    progress.process_cars_analysis_pipelines(api_client, ra_data)
+    progress.process_imagery_analysis_pipelines(api_client, ra_data)
+    progress.count_detected_items(ra_data)
 
     typer.echo("\n-------------------------------------------------------------")
     typer.echo("Analysis done, see 'result' folder for generated data. Stats:")
-    typer.echo(f"-> Scene processed: {len(selected_scenes)}")
-    typer.echo(f"--> Successfully: {len(selected_scenes) - len(failed_scene_ids)}")
-    typer.echo(f"--> Unsuccessfully: {len(failed_scene_ids)}")
+    ra_data.print_stats()
 
 
 app()
