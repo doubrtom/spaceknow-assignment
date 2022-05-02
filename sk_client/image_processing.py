@@ -62,7 +62,7 @@ def stitch_tiles(tiles: List[List[int]], scene_id: str):
 def render_detected_objects(tiles: List[List[int]], scene_id: str):
     """Render items from detections tiles into imagery tiles.
 
-    :param tiles: Tiles to process in format [[x, y, z], ...]
+    :param tiles: Tiles to process in format [[z, x, y], ...]
     :param scene_id: ID of scene, where objects were detected
     """
     for tile in tiles:
@@ -95,14 +95,41 @@ def render_detected_objects_into_tile(z, x, y, scene_id):
     image = cv2.imread(imagery_path, cv2.IMREAD_UNCHANGED)
 
     is_closed = True
-    color = (255, 0, 0, 255)  # color in BGR
-    thickness = 2  # in px
+    color = (255, 0, 0, 255)  # color in BGRA
+    thickness = 1  # in px
 
     for feature in detection_geojson["features"]:
-        points = feature["geometry"]["coordinates"][0]
-        points = [utils.convert_coordinates(p[0], p[1], z, True) for p in points]
+        coordinates = feature["geometry"]["coordinates"][0]
+        points = get_coordinates_for_rendering(z, x, y, coordinates)
         pts = np.array(points, np.int32)
         pts = pts.reshape((-1, 1, 2))
         image = cv2.polylines(image, [pts], is_closed, color, thickness)
 
     cv2.imwrite(f"result/{scene_id}/enhanced-imagery-{z}-{x}-{y}.png", image)
+
+
+def get_coordinates_for_rendering(tile_z, tile_x, tile_y, points):
+    """Convert coordinates for rendering in one tile.
+
+    Convert coordinates and ensure all points are inside tile,
+    where we are going to render detected item.
+    
+    todo(doubravskytomas): need code improvement.
+    """
+    x_start = tile_x * 256
+    x_end = (tile_x + 1) * 256
+    y_start = tile_y * 256
+    y_end = (tile_y + 1) * 256
+    converted_points = []
+    for point in points:
+        x, y = utils.convert_coordinates(point[0], point[1], tile_z)
+        if x < x_start:
+            x = x_start
+        elif x >= x_end:
+            x = x_end - 1
+        if y < y_start:
+            y = y_start
+        elif y >= y_end:
+            y = y_end - 1
+        converted_points.append([x % 256, y % 256])
+    return converted_points

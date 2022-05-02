@@ -105,7 +105,8 @@ def save_imagery_tile_data(scene_id: str, imagery_tile_data, z: int, x: int, y: 
 def convert_coordinates(longitude, latitude, zoom_level, mod_to_tile: bool = False):
     """Convert geographic coordinates.
 
-    Convert longitude and latitude into x, y coordinates.
+    Convert geographic coordinate system (longitude and latitude)
+    into x, y coordinates.
     For conversion, we use Web Mercator projection.
     See: https://en.wikipedia.org/wiki/Web_Mercator_projection
 
