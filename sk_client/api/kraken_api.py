@@ -3,6 +3,9 @@
 The API interfaces imagery and analyses through tiled web map interface.
 """
 from typing import List
+from http import HTTPStatus
+
+from requests import HTTPError
 
 from ..types import ExtentData, KrakenAnalysisResultData, InitiatedPipelineData
 
@@ -39,7 +42,12 @@ class KrakenApi:
     def get_tile_data(self, map_id: str, z: int, x: int, y: int, file_name: str):
         """Download one tile data for kraken run."""
         url = f"{self.BASE_URL}/grid/{map_id}/-/{z}/{x}/{y}/{file_name}"
-        response = self.api_client.send_get_query(url)
+        try:
+            response = self.api_client.send_get_query(url)
+        except HTTPError:
+            return None
+        if response.status_code == HTTPStatus.NO_CONTENT:
+            return None
         if file_name in ["truecolor.png"]:
             return response.content
         else:

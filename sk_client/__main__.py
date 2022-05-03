@@ -65,19 +65,14 @@ def main(
     search_pipeline = progress.search_imagery(api_client, ra_data.selected_area)
     progress.wait_pipeline(api_client, search_pipeline)
     list_imagery_data = progress.retrieve_imagery(api_client, search_pipeline)
-    selected_imagery_index = progress.select_imagery(list_imagery_data)
-
-    if selected_imagery_index is None:
-        ra_data.selected_scenes = [
-            imagery_data["sceneId"] for imagery_data in list_imagery_data
-        ]
-    else:
-        selected_imagery_data = list_imagery_data[selected_imagery_index]
-        ra_data.selected_scenes = [selected_imagery_data["sceneId"]]
+    ra_data.register_scenes(list_imagery_data)
+    selected_imagery_index = progress.select_imagery(ra_data)
+    ra_data.select_scene(selected_imagery_index)
 
     progress.run_analysis_pipelines(api_client, ra_data)
     progress.process_cars_analysis_pipelines(api_client, ra_data)
     progress.process_imagery_analysis_pipelines(api_client, ra_data)
+    progress.render_detected_items_into_imageries(ra_data)
     progress.count_detected_items(ra_data)
 
     typer.echo("\n-------------------------------------------------------------")

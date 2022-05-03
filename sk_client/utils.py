@@ -2,6 +2,7 @@
 import os
 import json
 import math
+from typing import List
 
 from .types import Credentials, ExtentData, FeatureCollectionData
 from .exceptions import ImproperlyConfiguredError
@@ -62,9 +63,9 @@ def pretty_print_json(json_dict: dict) -> None:
 def load_detection_tile_data(
     z: int, x: int, y: int, scene_id: str
 ) -> FeatureCollectionData:
-    """Save detection tile data (JSON) into file.
+    """Load detection tile data (JSON) from file.
 
-    Data are saved into "result" folder.
+    Data are loaded from "result" folder.
     """
     with open(
         f"result/{scene_id}/detections-{z}-{x}-{y}.geojson", "r", encoding="utf-8"
@@ -127,3 +128,30 @@ def convert_coordinates(longitude, latitude, zoom_level, mod_to_tile: bool = Fal
     if mod_to_tile:
         return x % 256, y % 256
     return x, y
+
+
+def zoom_tiles(tiles: List[List[int]], zoom_to: int) -> List[List[int]]:
+    """Take list of tiles and "zoom" them.
+
+    For this time this method support only zoom in and NOT zoom out.
+
+    This method return same number of tiles (if no zoom)
+    or bigger number of tiles when zoomed.
+
+    :param tiles: Tiles for zooming in format [[z, x, y], ...]
+    :param zoom_to: Targeting zoom level
+    :return: Zoomed tiles
+    """
+    zoom_step = zoom_to - tiles[0][0]
+    if zoom_step <= 0:
+        return tiles
+    new_tiles = []
+    for tile in tiles:
+        x_start = tile[1] * 2**zoom_step
+        x_end = x_start + 2**zoom_step
+        y_start = tile[2] * 2**zoom_step
+        y_end = y_start + 2**zoom_step
+        for new_x in range(x_start, x_end):
+            for new_y in range(y_start, y_end):
+                new_tiles.append([zoom_to, new_x, new_y])
+    return new_tiles

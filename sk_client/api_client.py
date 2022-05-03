@@ -40,12 +40,12 @@ class SpaceKnowClient:
         self.auth_id_token = id_token
         self.headers["Authorization"] = f"Bearer {id_token}"
 
-    def send_post_query(self, url: str, json_data: Optional[dict] = None):
+    def send_post_query(self, url: str, json_data: Optional[dict] = None) -> dict:
         """Send POST query."""
         response = requests.post(url, json=json_data, headers=self.headers)
         self.number_of_queries += 1
         if not response.ok:
-            logger.error(
+            logger.warning(
                 "Unable to get (POST) response for URL=%s, reason: %s",
                 url,
                 response.json(),
@@ -53,12 +53,12 @@ class SpaceKnowClient:
             response.raise_for_status()
         return response.json()
 
-    def send_get_query(self, url: str):
+    def send_get_query(self, url: str) -> requests.Response:
         """Send GET query."""
         response = requests.get(url, headers=self.headers)
         self.number_of_queries += 1
         if not response.ok:
-            logger.error(
+            logger.warning(
                 "Unable to get (GET) response for URL=%s, reason: %s",
                 url,
                 response.json(),
