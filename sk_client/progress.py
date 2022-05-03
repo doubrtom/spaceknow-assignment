@@ -249,7 +249,7 @@ def process_cars_analysis_pipelines(
         except PipelineFailedError:
             ra_data.failed_scene_ids.add(scene_id)
             continue
-        kraken_result_data = retrieve_kraken_analysis_imagery(api_client, pipeline)
+        kraken_result_data = retrieve_kraken_analysis_cars(api_client, pipeline)
         ra_data.cars_analysis_results[scene_id] = kraken_result_data
         download_cars_analysis_tiles(
             api_client,
@@ -273,8 +273,7 @@ def process_imagery_analysis_pipelines(
         except PipelineFailedError:
             ra_data.failed_scene_ids.add(scene_id)
             continue
-        kraken_result_data = retrieve_kraken_analysis_cars(api_client, pipeline)
-        # selected_zoom = 19
+        kraken_result_data = retrieve_kraken_analysis_imagery(api_client, pipeline)
         selected_zoom = select_zoom_level(
             scene_id,
             ra_data,
