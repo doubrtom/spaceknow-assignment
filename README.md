@@ -24,3 +24,5 @@ To run analysis over assignment area:
 `python -m sk_client main assignment_parking`
 
 Analysis is interactive, you have to select scenes and zoom level.
+Result imagery with rendered cars/trucks can be found in /result folder and sub-folders
+(there is one sub-folder per selected scene).
