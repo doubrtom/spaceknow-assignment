@@ -103,7 +103,7 @@ def save_imagery_tile_data(scene_id: str, imagery_tile_data, z: int, x: int, y: 
         file.write(imagery_tile_data)
 
 
-def convert_coordinates(longitude, latitude, zoom_level, mod_to_tile: bool = False):
+def convert_coordinates(longitude, latitude, zoom_level):
     """Convert geographic coordinates.
 
     Convert geographic coordinate system (longitude and latitude)
@@ -125,8 +125,6 @@ def convert_coordinates(longitude, latitude, zoom_level, mod_to_tile: bool = Fal
         * (2**zoom_level)
         * (math.pi - math.log(math.tan((math.pi / 4) + (lat / 2))))
     )
-    if mod_to_tile:
-        return x % 256, y % 256
     return x, y
 
 

@@ -104,7 +104,7 @@ def render_detected_objects_into_imagery(
         )
         return stitched_imagery
 
-    fill_color = (255, 0, 0, 255)  # color in BGRA
+    fill_color = (0, 255, 0, 255)  # color in BGRA
 
     for feature in detection_geojson["features"]:
         coordinates = feature["geometry"]["coordinates"][0]
@@ -130,9 +130,10 @@ def get_coordinates_for_rendering(tile_z, tile_x, tile_y, selected_zoom, points)
     and we got tile_z - it is zoom level per 'cars' analysis tile.
 
     We stitched also 4 tiles on tile_z zoom level,
-    so we have to subtract 1 and recalculate tile x, y coordinates one level zoom out.
+    so we have to subtract 1 zoom level and recalculate tile x, y coordinates one level zoom out.
     """
-    pixels_per_tile = 256 * 2 ** (selected_zoom - tile_z + 1)
+    zoom_step = 2 ** (selected_zoom - tile_z + 1)
+    pixels_per_tile = 256 * zoom_step
     tile_x = math.floor(tile_x / 2)
     tile_y = math.floor(tile_y / 2)
 
@@ -151,5 +152,8 @@ def get_coordinates_for_rendering(tile_z, tile_x, tile_y, selected_zoom, points)
             y = y_start
         elif y >= y_end:
             y = y_end - 1
+        x = x - (pixels_per_tile / 2)
+        y = y - (pixels_per_tile / 2)
         converted_points.append([x % pixels_per_tile, y % pixels_per_tile])
     return converted_points
+

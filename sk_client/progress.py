@@ -206,6 +206,9 @@ def download_imagery_analysis_tiles(
 def render_detected_items_into_imageries(ra_data: RunningAnalysesData) -> None:
     """Render detected items into imagery."""
     for scene_id in ra_data.selected_scenes:
+        if ra_data.is_scene_failed(scene_id):
+            # Do not process imagery pipeline when 'cars' detection failed
+            continue
         scene_title = ra_data.get_scene_title(scene_id)
         typer.echo(
             f"# Rendering detected objects into imagery tiles, scene: {scene_title}."
